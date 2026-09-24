@@ -5,34 +5,31 @@ import org.bytefred.ksat.SatSolver
 import org.bytefred.ksat.Traceable
 
 /**
- * Faithful Kotlin port of Marijn Heule's MicroSAT (MIT, (c) 2014-2018 Marijn Heule).
- * See ../shadow/microsat-c/ for the C original + instrumented reference.
+ * Kotlin port of MicroSAT's core CDCL solver by Manfred Scheucher, 2026.
+ * Upstream MicroSAT: MIT, (c) 2014-2018 Marijn Heule.
  *
- * This is a deliberate 1:1 translation so the port can be shadowed step-by-step
- * against the C version: same VMTF decision order, same watched-literal propagation,
- * same 1-UIP conflict analysis, same integer moving-average restart schedule. The C
- * code stores everything in one `int* DB` with pointer arithmetic; here that is an
- * [IntArray] with integer indices. The C code uses arrays indexed by signed literals
- * (`false[-lit]`, `first[-lit]`); here those live in arrays of size `2n+1` accessed
- * via a `+ n` offset (see [fal] / [fst]).
- *
- * Not idiomatic Kotlin on purpose — readability defers to matching the C exactly.
+ * A line-for-line translation so the port can be shadowed step-by-step against the C.
+ * Same as the C: VMTF decision order, watched-literal propagation, 1-UIP conflict analysis,
+ * integer moving-average restart schedule. The C keeps everything in one `int* DB` with
+ * pointer arithmetic; here that is an [IntArray] with integer indices. The C indexes some
+ * arrays by signed literal (`false[-lit]`, `first[-lit]`); here those are size `2n+1` with a
+ * `+ n` offset (see [fal] / [fst]). The code follows the C, not idiomatic Kotlin, so the two
+ * line up. See ../shadow/microsat-c/ for the C original and instrumented reference.
  *
  * @param numVarsHint number of variables (C: `n` in `initCDCL`).
- * @param maxLemmasInit initial `maxLemmas` (C: `S->maxLemmas = 2000`). This is a
- *   TEST-ONLY knob: MicroSAT's REDUCE path only fires once the learnt-clause count
- *   exceeds `maxLemmas`, and with the upstream default of 2000 no *fast* instance
- *   reaches it. Lowering it (e.g. to 3) forces `reduceDB` on a small UNSAT instance
- *   so the dual-location watch-pointer compaction gets trace-covered. The default
- *   equals the upstream value, so normal behaviour is byte-for-byte unchanged. The
- *   C reference mirrors this via the `LSMAXLEMMAS` env var (see microsat_trace.c).
+ * @param maxLemmasInit initial `maxLemmas` (C: `S->maxLemmas = 2000`). A test-only knob:
+ *   MicroSAT's reduce path only fires once the learnt-clause count exceeds `maxLemmas`, and
+ *   with the upstream default of 2000 no fast instance reaches it. Lowering it (e.g. to 3)
+ *   forces `reduceDB` on a small unsat instance so the dual-location watch-pointer compaction
+ *   gets covered by the trace. The default equals the upstream value, so normal behaviour is
+ *   unchanged. The C reference mirrors this via the `LSMAXLEMMAS` env var (see microsat_trace.c).
  */
 class MicroSat(
     numVarsHint: Int,
     private val maxLemmasInit: Int = 2000,
-    // TEST-ONLY knob (mirrors the C reference's LSRESTARTFACTOR): restart fires when
+    // Test-only knob (mirrors the C reference's LSRESTARTFACTOR): restart fires when
     // `fast > slow/100 * restartFactorInit`. Upstream default 125; lowering it makes restarts
-    // (and thus REDUCE) fire on small instances so those paths get trace-covered.
+    // (and thus reduce) fire on small instances so those paths get covered by the trace.
     private val restartFactorInit: Int = 125,
 ) : SatSolver, Traceable {
 
