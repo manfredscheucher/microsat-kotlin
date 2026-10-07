@@ -6,7 +6,7 @@ import org.bytefred.ksat.Traceable
 
 /**
  * Kotlin port of MicroSAT's core CDCL solver by Manfred Scheucher, 2026.
- * Upstream MicroSAT: MIT, (c) 2014-2018 Marijn Heule.
+ * Upstream MicroSAT: 2014-2018 release (github.com/marijnheule/microsat; the complete solver, no commit pinned); MIT, (c) 2014-2018 Marijn Heule.
  *
  * A line-for-line translation so the port can be shadowed step-by-step against the C.
  * Same as the C: VMTF decision order, watched-literal propagation, 1-UIP conflict analysis,
